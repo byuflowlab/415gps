@@ -12,3 +12,5 @@ python gpslog.py /dev/ttyUSB0
 ```
 
 An example csv output file can be found in the example_output directory.  The time entry in the CSV file corresponds to the time since the script was started.
+
+I still need to grab the licenses for the driver files and the atcommander files and put them in here.

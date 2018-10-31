@@ -1,0 +1,3 @@
+libnmea_navsat_driver/__init__.py
+*.csv
+*.pyc

@@ -3,8 +3,7 @@
 # Provide command line access to AT command set on radios
 #
 
-import serial, sys, argparse, time
-from pexpect import fdpexpect
+import serial, sys, argparse, time, re
 
 class ATCommandSet(object):
     ''' Interface to the AT command set '''
@@ -12,48 +11,48 @@ class ATCommandSet(object):
     ### AT Command Constants ###
 
     # Prefix determines if commanding attached or linked radio
-    AT_LOCAL_PREFIX	= 'AT'
-    AT_REMOTE_PREFIX	= 'RT'
+    AT_LOCAL_PREFIX     = 'AT'
+    AT_REMOTE_PREFIX    = 'RT'
 
     # AT commands that are implemented in this class
-    AT_SHOW_BRD_TYPE	= 'I2'
-    AT_SHOW_BRD_FREQ	= 'I3'
-    AT_SHOW_BRD_VER	= 'I4'
-    AT_SHOW_PARAM	= 'I5'
-    AT_EXIT		= 'O'
-    AT_PARAM		= ''
-    AT_REBOOT		= 'Z'
-    AT_PARAM_WRITE	= '&W'
+    AT_SHOW_BRD_TYPE    = 'I2'
+    AT_SHOW_BRD_FREQ    = 'I3'
+    AT_SHOW_BRD_VER     = 'I4'
+    AT_SHOW_PARAM       = 'I5'
+    AT_EXIT             = 'O'
+    AT_PARAM            = ''
+    AT_REBOOT           = 'Z'
+    AT_PARAM_WRITE      = '&W'
     # AT commands yet to be implemented here
-    AT_SHOW_VER_LONG	= 'I0'
-    AT_SHOW_VER		= 'I1'
-    AT_SHOW_TDM		= 'I6'
-    AT_SHOW_RSSI	= 'I7'
-    AT_PARAM_FACTORY	= '&F'
-    AT_DEBUG_RSSI	= '&T=RSSI'
-    AT_DEBUG_TDM	= '&T=TDM'
-    AT_DEBUG_OFF	= '&T'
+    AT_SHOW_VER_LONG    = 'I0'
+    AT_SHOW_VER         = 'I1'
+    AT_SHOW_TDM         = 'I6'
+    AT_SHOW_RSSI        = 'I7'
+    AT_PARAM_FACTORY    = '&F'
+    AT_DEBUG_RSSI       = '&T=RSSI'
+    AT_DEBUG_TDM        = '&T=TDM'
+    AT_DEBUG_OFF        = '&T'
 
     # Parameters are gotten with AT_PARAM + PARAM_* + '?"
     # Parameters are set with AT_PARAM + PARAM_* + '=' + value
-    PARAM_FORMAT	= 'S0'
-    PARAM_SERIAL_SPEED	= 'S1'
-    PARAM_AIR_SPEED	= 'S2'
-    PARAM_NETID		= 'S3'
-    PARAM_TXPOWER	= 'S4'
-    PARAM_ECC		= 'S5'
-    PARAM_MAVLINK	= 'S6'
-    PARAM_OPPRESEND	= 'S7'
-    PARAM_MIN_FREQ	= 'S8'
-    PARAM_MAX_FREQ	= 'S9'
-    PARAM_NUM_CHANNELS	= 'S10'
-    PARAM_DUTY_CYCLE	= 'S11'
-    PARAM_LBT_RSSI	= 'S12'
-    PARAM_MANCHESTER	= 'S13'
-    PARAM_RTSCTS	= 'S14'
-    PARAM_MAX_WINDOW	= 'S15'
+    PARAM_FORMAT        = 'S0'
+    PARAM_SERIAL_SPEED  = 'S1'
+    PARAM_AIR_SPEED     = 'S2'
+    PARAM_NETID         = 'S3'
+    PARAM_TXPOWER       = 'S4'
+    PARAM_ECC           = 'S5'
+    PARAM_MAVLINK       = 'S6'
+    PARAM_OPPRESEND     = 'S7'
+    PARAM_MIN_FREQ      = 'S8'
+    PARAM_MAX_FREQ      = 'S9'
+    PARAM_NUM_CHANNELS  = 'S10'
+    PARAM_DUTY_CYCLE    = 'S11'
+    PARAM_LBT_RSSI      = 'S12'
+    PARAM_MANCHESTER    = 'S13'
+    PARAM_RTSCTS        = 'S14'
+    PARAM_MAX_WINDOW    = 'S15'
 
-    PARAM_TARGET_RSSI   = 'R0'
+    PARAM_TARGET_RSSI     = 'R0'
     PARAM_HYSTERESIS_RSSI = 'R1'
 
     ### Internals ###
@@ -66,34 +65,24 @@ class ATCommandSet(object):
         self.is_remote = False		# Track if operating on remote radio
         self.read_timeout = 3		# Max time to wait for data
 
-        logfile=None
-        if debug:
-            logfile=sys.stdout
-
         # Initialize the serial connection
-        # Note: we pass the buck on raised exceptions
         self.port = serial.Serial(device, baudrate=baudrate, timeout=0,
                                   dsrdtr=dsrdtr, rtscts=rtscts, xonxoff=xonxoff)
-        self.ser = fdpexpect.fdspawn(self.port.fileno(), logfile=logfile)
 
     # Send raw text to radio
     def __send(self, text):
-        if (self.port is None) or (self.ser is None):
+        if (self.port is None):
             return False
-
-        try:
-            res = self.ser.send(text)
-            time.sleep(0.5)
-            return res
-        except:
-            return False
+        self.port.write(text)
+        # let the serial line catch up
+        time.sleep(0.5)
+        return True
 
     # Form an AT command and send to radio
     def __send_at(self, command):
         # Don't send bytes if in "normal" mode, other radio is listening!
         if not self.is_command:
             return False
-
         prefix = ATCommandSet.AT_LOCAL_PREFIX
         if self.is_remote and (command != ATCommandSet.AT_EXIT):
             prefix = ATCommandSet.AT_REMOTE_PREFIX
@@ -102,16 +91,16 @@ class ATCommandSet(object):
 
     # Look for 'pattern' (string RE) and return MatchObject if seen before read_timeout
     def __expect(self, pattern_list):
-        if (self.port is None) or (self.ser is None):
+        if (self.port is None):
             return False
 
-        try:
-            self.ser.expect(pattern_list, timeout=self.read_timeout)
-            res = self.ser.match
-            time.sleep(0.5)  # Let the serial line catch up
-            return res
-        except:
-            return False
+        inBuffer = self.port.inWaiting()
+        response = ""
+        while inBuffer > 0:
+            response += self.port.readline(inBuffer)
+            inBuffer = self.port.inWaiting()
+        patterns = "|".join(pattern_list)
+        return re.search(patterns,response)
 
     # Send AT command, then look for pattern
     def __query(self, command, pattern):
@@ -122,21 +111,21 @@ class ATCommandSet(object):
 
     # Query for an int
     def __query_int(self, command):
-        val = self.__query(command, ['(\d+)\r\n'])
+        val = self.__query(command, ['(\d+)'])
         if val:
             return int(val.group(0))
         return False
 
     # Query for a float
     def __query_float(self, command):
-        val = self.__query(command, ['(\d+\.\d+)\r\n'])
+        val = self.__query(command, ['(\d+\.\d+)'])
         if val:
             return float(val.group(0))
         return False
 
     # Query for literal text (return True if found)
     def __query_exact(self, command, text):
-        return not not self.__query(command, ['%s\r\n' % text])
+        return not not self.__query(command, ['%s' % text])
 
 
     ### Manage command mode ###
@@ -154,7 +143,6 @@ class ATCommandSet(object):
         time.sleep(1)
         if not self.__expect(['OK']):
             return False
-
         self.is_command = True
         return True
 
@@ -196,7 +184,7 @@ class ATCommandSet(object):
 
     # Return a multi-line string containing all parameters, for display
     def get_params_text(self):
-        res = self.__query(ATCommandSet.AT_SHOW_PARAM, ['(S0:.*S14:.*)\r\n'])
+        res = self.__query(ATCommandSet.AT_SHOW_PARAM, ['(S0:[\s\S]*?S14:.*)'])
         if res:
             return res.group(0)
         else:

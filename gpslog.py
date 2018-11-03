@@ -10,10 +10,6 @@ import math
 # import GPS driver
 import libnmea_navsat_driver.driver
 
-# import GPS and SIK radio configuration routine
-sys.path.insert(0, './gps-and-radio-config/')
-import configure
-
 # parse arguments
 if len(sys.argv) < 2:
     print 'Please specify the port (e.g. python gpslog.py /dev/ttyUSB0)'

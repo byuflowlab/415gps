@@ -4,11 +4,16 @@ import atcommander
 import sys
 import time
 
-def configure(port, gpsbaudrate=9600, retries = 3):
+def configure(port, gpsbaudrate=115200, radiobaudrate=57600, newbaudrate=57600, retries = 3):
 
     # Binary GPS Config Messages
-    UBX_CFG_PRT='06 00 14 00 01 00 00 00 d0 08 00 00 00 e1 00 00 07 00 03 00 00 00 00 00'
-    # UBX_CFG_PRT='06 00 14 00 01 00 00 00 d0 08 00 00 00 c2 01 00 07 00 03 00 00 00 00 00'
+
+    if newbaudrate == 57600:
+        UBX_CFG_PRT='06 00 14 00 01 00 00 00 d0 08 00 00 00 e1 00 00 07 00 03 00 00 00 00 00'
+    elif newbaudrate == 115200:
+        UBX_CFG_PRT='06 00 14 00 01 00 00 00 d0 08 00 00 00 c2 01 00 07 00 03 00 00 00 00 00'
+    else:
+        raise ValueError('Baud rate message not defined')
     UBX_CFG_RATE='06 08 06 00 c8 00 01 00 01 00'
     UBX_CFG_NAV5='06 24 24 00 ff ff 08 03 00 00 00 00 10 27 00 00 05 00 fa 00 fa 00 64 00 5e 01 00 3c 00 00 00 00 00 00 00 00 00 00 00 00'
     UBX_CFG_CFG_SAVE='06 09 0d 00 00 00 00 00 ff ff 00 00 00 00 00 00 03'
@@ -16,7 +21,7 @@ def configure(port, gpsbaudrate=9600, retries = 3):
     # Test baudrate and fix if necessary
     print 'Checking Baud Rate Settings...'
     for i in range(retries):
-        ubx = ubxconfig.UBXConfig(port, baudrate=57600)
+        ubx = ubxconfig.UBXConfig(port, baudrate=newbaudrate)
         fail = ubx.send_ubx(UBX_CFG_PRT)
         if not fail:
             break
@@ -24,11 +29,11 @@ def configure(port, gpsbaudrate=9600, retries = 3):
     if fail:
         print 'Fixing baudrate'
         print '\tGetting baudrate of radio...'
-        radiobaudrate = 57600
-        for baudrate in [115200, 57600, 9600]:
+        for baudrate in [9600, 57600, 115200]:
             at = atcommander.ATCommandSet(port, baudrate=baudrate)
-            at.leave_command_mode_force()
-            correctbaudrate = at.enter_command_mode()
+            # at.leave_command_mode_force()
+            at.enter_command_mode()
+            correctbaudrate = at.get_radio_version()
             at.leave_command_mode()
             if correctbaudrate:
                 radiobaudrate = int(baudrate)
@@ -46,11 +51,11 @@ def configure(port, gpsbaudrate=9600, retries = 3):
             ubx.send_ubx(UBX_CFG_PRT, response=False)
 
         print '\tChanging radio baudrate to new GPS baudrate'
-        remote_failed = newradiobaudrate(port, gpsbaudrate, 57600)
+        remote_fail = newradiobaudrate(port, gpsbaudrate, newbaudrate)
         time.sleep(1.0)
 
         print '\tTesting GPS baud rate change'
-        ubx = ubxconfig.UBXConfig(port, baudrate=57600)
+        ubx = ubxconfig.UBXConfig(port, baudrate=newbaudrate)
         for i in range(5):
             fail = ubx.send_ubx(UBX_CFG_PRT)
             if fail:
@@ -92,52 +97,44 @@ def configure(port, gpsbaudrate=9600, retries = 3):
 # function for changing radio baudrate
 def newradiobaudrate(port, oldbaudrate, newbaudrate, retries = 3):
     at = atcommander.ATCommandSet(port, baudrate=oldbaudrate)
-
-    def _set_params(myset):
-        fail = False
-        for prm in myset:
-            if at.set_param(atcommander.param_map[prm], myset[prm]):
-                print "\t\tSet %s to %d" % (prm, myset[prm])
-            else:
-                fail = True
-                return fail
-        if at.write_params():
-            print "\t\tWrote parameters to EEPROM."
-        else:
-            fail = True
-            return fail
-        if at.reboot():
-            print "\t\tCommanded reboot; changes should be in effect momentarily."
-        else:
-            print "\t\tFailed to command reboot; please manually reboot the radio."
-        return fail
-
-    at.leave_command_mode_force()
-    if not at.enter_command_mode():
-        print "\t\tCould not enter command mode"
+    # no failures yet
+    local_fail = False
+    remote_fail = False
+    # we'll be setting the serial speed
     remote_set = {'SERIAL_SPEED': int(newbaudrate/1000)}
     local_set = {'SERIAL_SPEED': int(newbaudrate/1000)}
-    local_failed = False
-    remote_failed = False
-    at.set_remote_mode(True)
-    if not at.get_radio_version:
-        print "\tCould not contact remote radio, aborting without saving changes."
-        remote_failed = True
-    else:
-        print "\tChanging settings on remote radio..."
-        for i in range(retries):
-            remote_failed = _set_params(remote_set)
-            if not remote_failed:
+    # enter command mode
+    # change radio baudrate, starting with remote radio
+    for remote, radiofail in zip([True, False],[local_fail, remote_fail]):
+        radio = "remote" if remote else "local"
+        at.set_remote_mode(remote)
+        for retry in range(retries):
+            radiofail = False
+            # try entering command mode
+            at.enter_command_mode()
+            # try changing remote baudrate
+            if at.set_param('S1', int(newbaudrate/1000)):
+                print "\t\tSet %s radio baudrate to %d" % (radio, newbaudrate)
+            else:
+                print "\t\tFailed to set %s radio baudrate to %d" % (radio, newbaudrate)
+                radiofail = True
+            if at.write_params():
+                print "\t\tWrote parameters to EEPROM."
+            else:
+                radiofail = True
+                print "\t\tFailed to write parameters to EEPROM."
+            if at.reboot():
+                print "\t\tCommanded reboot; changes should be in effect momentarily."
+            else:
+                radiofail = True
+                print "\t\tFailed to command reboot."
+            if radiofail and retry is not retries-1:
+                "Baudrate configuration failed, trying again"
+            else:
                 break
-    at.set_remote_mode(False)
-    if not remote_failed:
-        print "\tChanging settings on local radio..."
-        for i in range(retries):
-            local_failed = _set_params(local_set)
-            if not local_failed:
-                break
+    # leave command mode
     at.leave_command_mode()
-    return remote_failed
+    return local_fail, remote_fail
 
 # parse arguments
 if __name__ == '__main__':

@@ -1,18 +1,45 @@
 # 415gps
 
-libnmea_navsat_driver contains the driver for reading NMEA strings
+The script gpslog.py reads serial GPS data (NMEA messages) and writes the data to a time-stamped csv file.
 
-gps_and_radio_config contains routines for reconfiguring the radios and gps's.  They should only need to be configured once, but I need to test this, our last gps's wouldn't save their parameters.  I have a script that is moderately robust for doing this automatically, that we can use if necessary.
-
-When called, the script gpslog.py will record data into a time-stamped csv file.  Data is output only if the gps has a satellite fix.  The script takes the port name as a command line argument.  Students will need to make sure that they can read serial data through their usb port.  Currently, I also print to the terminal the GPS output regardless of whether or not there is a GPS fix.
-
-Example Usage (from command line):
+## Example Usage (from command line):
 ```
 python gpslog.py /dev/ttyUSB0
 ```
+You will need to replace '/dev/ttyUSB0' with the path to your port.
 
-The update rate is currently set to 5 Hz.
+When called, the script gpslog.py will record data into a time-stamped csv file.  Data is output only if the gps has a satellite fix.
 
 An example csv output file can be found in the example_output directory.  The time entry in the CSV file corresponds to the time since the script was started.  I used http://www.hamstermap.com to plot the coordinates.
 
-I still need to grab the licenses for the driver files and the atcommander files and put them in here.
+## Finding Your Serial Port
+### Windows
+* Open Device Manager, and expand the Ports (COM & LPT) list.
+* Note the number on the USB Serial Port.
+* Run script with 
+  ```
+  python gpslog.py COM*
+  ```
+  where * is the number of your serial port
+
+### Macintosh
+* Open a terminal and type: ls /dev/*.
+* Note the port number listed for /dev/tty.usbmodem* or /dev/tty.usbserial*.
+* Run the script with
+  ```
+  python gpslog.py /dev/tty.usbmodem*
+  ```
+  or 
+  ```
+  python gpslog.py /dev/tty.usbserial*
+  ```
+  where * is the number of your serial port
+
+### Linux
+* Open a terminal and type: ls /dev/tty*.
+* Note the port number listed for /dev/ttyUSB* or /dev/ttyACM*.
+* Run the script with
+  ```
+  python gpslog.py /dev/ttyUSB*
+  ```
+  where * is the number of your serial port

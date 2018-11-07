@@ -8,7 +8,7 @@ python gpslog.py /dev/ttyUSB0
 ```
 You will need to replace '/dev/ttyUSB0' with the path to your port.
 
-When called, the script gpslog.py will record data into a time-stamped csv file.  Data is output only if the gps has a satellite fix.
+When called, the script gpslog.py will record data into a time-stamped csv file.  Data is output only if the gps has a satellite fix.  You can stop the script by typing CTRL+C.
 
 An example csv output file can be found in the example_output directory.  The time entry in the CSV file corresponds to the time since the script was started.  I used http://www.hamstermap.com to plot the coordinates.
 
@@ -43,3 +43,6 @@ An example csv output file can be found in the example_output directory.  The ti
   python gpslog.py /dev/ttyUSB*
   ```
   where * is the number of your serial port
+
+## Using GPS data in real time
+Inside the gpslog.py script the function `usrfun` can be modified to allow real time data processing.

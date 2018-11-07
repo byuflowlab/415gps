@@ -15,7 +15,7 @@ def configure(port, gpsbaudrate=115200, radiobaudrate=57600, newbaudrate=57600, 
     else:
         raise ValueError('Baud rate message not defined')
     UBX_CFG_RATE='06 08 06 00 c8 00 01 00 01 00'
-    UBX_CFG_NAV5='06 24 24 00 ff ff 08 03 00 00 00 00 10 27 00 00 05 00 fa 00 fa 00 64 00 5e 01 00 3c 00 00 00 00 00 00 00 00 00 00 00 00'
+    UBX_CFG_NAV5='06 24 24 00 ff ff 06 03 00 00 00 00 10 27 00 00 05 00 fa 00 fa 00 64 00 2c 01 00 00 00 00 10 27 00 00 00 00 00 00 00 00'
     UBX_CFG_CFG_SAVE='06 09 0d 00 00 00 00 00 ff ff 00 00 00 00 00 00 03'
 
     # Test baudrate and fix if necessary

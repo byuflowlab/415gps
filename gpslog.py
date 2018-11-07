@@ -57,10 +57,10 @@ class gpslogger:
 
         ell = self.ellipse([lat, lon])
         if ell > 1.0:
-            print "ALERT!  Out of bounds! Return immediately!"
+            print("ALERT!  Out of bounds! Return immediately!")
             return
         elif ell > 0.7:
-            print "WARNING!  Close to boundary! Ready pilot."
+            print("WARNING!  Close to boundary! Ready pilot.")
             return
 
         # --- update counter ---

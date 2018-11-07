@@ -7,12 +7,20 @@ import time
 import warnings
 import math
 
+# user defined function
+def usrfun(time, fix, NumSat, lat, lon, alt, speed, ground_course, covariance):
+    # YOUR CODE GOES HERE
+    print(time, fix, NumSat, lat, lon, alt, speed, ground_course, covariance)
+    return None
+
+# --- DO NOT MODIFY ANYTHING BELOW THIS LINE --- #
+
 # import GPS driver
 import libnmea_navsat_driver.driver
 
 # parse arguments
 if len(sys.argv) < 2:
-    print 'Please specify the port (e.g. python gpslog.py /dev/ttyUSB0)'
+    print('Please specify the port (e.g. python gpslog.py /dev/ttyUSB0)')
 else:
     serial_port = sys.argv[1]
 
@@ -24,6 +32,7 @@ driver = libnmea_navsat_driver.driver.NMEADriver()
 timestr = time.strftime("%Y%m%d-%H%M%S.csv")
 f = open(timestr, "w")
 f.write("time,fix,NumSat,latitude,longitude,altitude,speed,ground_course,covariance\n")
+
 # set time to zero
 t0 = time.time()
 
@@ -33,7 +42,7 @@ try:
         try:
             out = driver.add_sentence(data, time.time()-t0)
             if out != False:
-                print out
+                usrfun(*out)
                 if not (math.isnan(out[3]) or math.isnan(out[4]) or math.isnan(out[5])):
                     f.write(str(out[0])+","+str(out[1])+","+str(out[2])+","+ \
                         str(out[3])+","+str(out[4])+","+str(out[5])+","+ \

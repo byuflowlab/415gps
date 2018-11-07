@@ -4,7 +4,7 @@ import atcommander
 import sys
 import time
 
-def configure(port, gpsbaudrate=115200, radiobaudrate=57600, newbaudrate=57600, retries = 3):
+def configure(port, gpsbaudrate=9600, radiobaudrate=57600, newbaudrate=57600, retries = 3):
 
     # Binary GPS Config Messages
 
@@ -43,16 +43,17 @@ def configure(port, gpsbaudrate=115200, radiobaudrate=57600, newbaudrate=57600, 
         if radiobaudrate != gpsbaudrate:
             print '\tChanging radio baudrate to GPS baudrate'
             newradiobaudrate(port, radiobaudrate, gpsbaudrate)
-            time.sleep(1.0)
+            time.sleep(10.0)
 
         print '\tChanging GPS baud rate to new baudrate'
-        ubx = ubxconfig.UBXConfig(port, baudrate=gpsbaudrate)
         for i in range(5):
+            ubx = ubxconfig.UBXConfig(port, baudrate=gpsbaudrate)
             ubx.send_ubx(UBX_CFG_PRT, response=False)
+            time.sleep(1.0)
 
         print '\tChanging radio baudrate to new GPS baudrate'
         remote_fail = newradiobaudrate(port, gpsbaudrate, newbaudrate)
-        time.sleep(1.0)
+        time.sleep(10.0)
 
         print '\tTesting GPS baud rate change'
         ubx = ubxconfig.UBXConfig(port, baudrate=newbaudrate)

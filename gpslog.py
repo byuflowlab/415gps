@@ -14,15 +14,14 @@ def usrfun(time, fix, NumSat, lat, lon, alt, speed, ground_course, covariance):
 
     # modify the contents of this function to fit your needs
 
-    if usrfun.counter%10 == 0:
+    if usrfun.counter%10 == 0:  # print the titles every 10 iterations
         print("time,fix,NumSat,lat,lon,alt,speed,ground_course,covariance")
 
     print(time,fix,NumSat,lat,lon,alt,speed,ground_course,covariance)
 
     usrfun.counter += 1
 
-    # we return None because nothing is done with the output of this function
-    return None
+    return
 
 # you can define variables outside of your function like this and use them inside
 usrfun.counter = 0

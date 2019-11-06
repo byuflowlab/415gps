@@ -68,13 +68,13 @@ class UBXConfig(object):
             else:
                 ubx_response = int(ubx_response.group(0).encode('hex'), 16)
                 if ubx_response == int(self.UBX_ACK_ACK, 16):
-                    print "ACKNOWLEDGED"
+                    print("ACKNOWLEDGED")
                     fail = False
                 elif ubx_response == int(self.UBX_ACK_NAK, 16):
-                    print "REJECTED"
+                    print("REJECTED")
                     fail = True
                 else:
-                    print "FAILED"
+                    print("FAILED")
                     fail = True
             return fail
         else:

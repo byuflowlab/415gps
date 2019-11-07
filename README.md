@@ -60,3 +60,5 @@ This script is written for students in ME 415.  The script gpslog.py reads seria
 The script gpslog.py will record data into a time-stamped csv file.  Data is output only if the gps has a satellite fix.  An example csv output file can be found in the example_output directory.  The time entry in the CSV file corresponds to the time since the script was started.  I used http://www.hamstermap.com to plot the coordinates.
 
 Inside the gpslog.py script you will need to modify `usrfun` to allow real time data processing. There are two sections in the code that say "FOR YOU".  The first is in `initializevariables` if you need to initialize any variables you can do so here.  This function is just called once when the gps is first turned on.  the other function is `usrfun`, which is called every time a new gps packet is received.  This is where you'll add logic for figuring out which way to turn, checking if you reached a waypoint, checking your altitude, etc.  Boundary checks are already done for you in that function.
+
+Note: If you want to run your script from Spyder: <https://stackoverflow.com/a/31392812>, put the port argument into the command line option field.

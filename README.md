@@ -14,36 +14,36 @@ This script is written for students in ME 415.  The script gpslog.py reads seria
 
 1. Plug one of the radio transmitters into your computer via the USB port.  You should see a faint green light flashing showing you that it is powered on.  You now need to figure out what port the transmitter is connected to. Instructions for different operating systems are shown below.
 
-**Windows**
-* Open Device Manager, and expand the Ports (COM & LPT) list.
-* Note the number on the USB Serial Port.
-* Run script with (note this for step 4)
-  ```
-  python gpslog.py COM*
-  ```
-  where * is the number of your serial port
+    **Windows**
+    * Open Device Manager, and expand the Ports (COM & LPT) list.
+    * Note the number on the USB Serial Port.
+    * Run script with (note this for step 4)
+      ```
+      python gpslog.py COM*
+      ```
+      where * is the number of your serial port
 
-**Macintosh**
-* Open a terminal and type: ls /dev/*.
-* Note the port number listed for /dev/tty.usbmodem* or /dev/tty.usbserial*.
-* Run the script with (note this for step 4)
-  ```
-  python gpslog.py /dev/tty.usbmodem*
-  ```
-  or 
-  ```
-  python gpslog.py /dev/tty.usbserial*
-  ```
-  where * is the number of your serial port
+    **Macintosh**
+    * Open a terminal and type: ls /dev/*.
+    * Note the port number listed for /dev/tty.usbmodem* or /dev/tty.usbserial*.
+    * Run the script with (note this for step 4)
+      ```
+      python gpslog.py /dev/tty.usbmodem*
+      ```
+      or 
+      ```
+      python gpslog.py /dev/tty.usbserial*
+      ```
+      where * is the number of your serial port
 
-**Linux**
-* Open a terminal and type: ls /dev/tty*.
-* Note the port number listed for /dev/ttyUSB* or /dev/ttyACM*.
-* Run the script with (note this for step 4)
-  ```
-  python gpslog.py /dev/ttyUSB*
-  ```
-  where * is the number of your serial port
+    **Linux**
+    * Open a terminal and type: ls /dev/tty*.
+    * Note the port number listed for /dev/ttyUSB* or /dev/ttyACM*.
+    * Run the script with (note this for step 4)
+      ```
+      python gpslog.py /dev/ttyUSB*
+      ```
+      where * is the number of your serial port
 
 2. Open up a command prompt ("Terminal" in Mac/Linux or "Anaconda Prompt" in Windows).  Navigate to the previously downloaded 415gps folder (using the command `cd`).
 
